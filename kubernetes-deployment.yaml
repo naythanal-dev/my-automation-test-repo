@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservice-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: microservice
+  template:
+    metadata:
+      labels:
+        app: microservice
+    spec:
+      containers:
+        - name: microservice
+          image: your-docker-registry/microservice:latest # Replace with your image
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-service:9092" # Replace with your Kafka service
+            - name: KAFKA_TOPIC_INPUT
+              value: "test_IN"
+            - name: KAFKA_TOPIC_OUTPUT
+              value: "test_OUT"
+
+--- # Separator for defining another resource
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: microservice-service
+spec:
+  selector:
+    app: microservice
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer # Use NodePort or ClusterIP if LoadBalancer is not supported
