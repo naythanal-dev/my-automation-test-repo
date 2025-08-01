@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini API Backend Code Generator</title>
+    <!-- Use Tailwind CSS for a clean, modern look -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e; /* Dark background color */
+        }
+        .container {
+            max-width: 1000px;
+        }
+        /* Custom scrollbar for dark theme */
+        .scrollbar-dark::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scrollbar-dark::-webkit-scrollbar-track {
+            background: #2b2b4d;
+        }
+        .scrollbar-dark::-webkit-scrollbar-thumb {
+            background-color: #4a4a75;
+            border-radius: 4px;
+            border: 2px solid #2b2b4d;
+        }
+        .scrollbar-dark::-webkit-scrollbar-thumb:hover {
+            background-color: #5d5d8c;
+        }
+    </style>
+</head>
+<body class="bg-[#1a1a2e] text-gray-200 flex items-center justify-center min-h-screen p-4">
+    <div class="container bg-[#16213e] p-8 rounded-2xl shadow-2xl space-y-8 border border-purple-500">
+
+        <!-- Title and Description -->
+        <header class="text-center">
+            <h1 class="text-4xl font-bold text-gray-50">Gemini API Code Generator</h1>
+            <p class="mt-2 text-lg text-gray-400">
+                Generate backend code from a template or analyze a user story.
+            </p>
+        </header>
+
+        <!-- User Story Analysis Section -->
+        <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-gray-50">1. Analyze a User Story</h2>
+            <div>
+                <label for="user-story-input" class="block text-sm font-medium text-gray-300">Enter a User Story</label>
+                <div class="mt-1">
+                    <textarea id="user-story-input" rows="4" placeholder="e.g., As a registered user, I want to be able to log in with my email and password so that I can access my personalized dashboard." class="block w-full rounded-md border-gray-600 shadow-sm p-3 bg-[#1e2a4a] text-gray-200 focus:ring-purple-500 focus:border-purple-500 sm:text-sm transition-colors duration-200"></textarea>
+                </div>
+            </div>
+            <div class="text-center">
+                <button id="analyze-story-btn" class="w-full sm:w-auto px-6 py-3 border border-transparent text-lg font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                    Analyze User Story
+                </button>
+            </div>
+            <div id="story-analysis-container" class="mt-4 hidden">
+                <h3 class="text-xl font-semibold text-gray-50 mb-2">User Story Breakdown</h3>
+                <div id="story-analysis-output" class="p-4 bg-[#1e2a4a] rounded-lg border border-gray-600 overflow-y-auto max-h-72 scrollbar-dark">
+                    <pre class="whitespace-pre-wrap text-sm text-gray-300"></pre>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-gray-700">
+
+        <!-- Backend Code Generation Section -->
+        <div class="space-y-4">
+            <h2 class="text-2xl font-bold text-gray-50">2. Generate Backend Code</h2>
+            <div>
+                <label for="repo-url" class="block text-sm font-medium text-gray-300">Public GitHub Repository URL</label>
+                <div class="mt-1 flex items-center">
+                    <input type="text" id="repo-url" placeholder="e.g., https://github.com/google/gemini-pro-nodejs-quickstart" class="block w-full rounded-md border-gray-600 shadow-sm p-3 bg-[#1e2a4a] text-gray-200 focus:ring-purple-500 focus:border-purple-500 sm:text-sm transition-colors duration-200">
+                    <button id="fetch-files-btn" class="ml-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200">
+                        Fetch Files
+                    </button>
+                </div>
+            </div>
+            
+            <!-- File List Section -->
+            <div id="file-list-container" class="mt-6 border border-gray-600 rounded-md p-4 bg-[#1e2a4a] max-h-96 overflow-y-auto scrollbar-dark">
+                <div id="loading-spinner" class="hidden text-center">
+                    <svg class="animate-spin h-8 w-8 text-purple-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-2 text-gray-400">Fetching files...</p>
+                </div>
+                <div id="file-list" class="space-y-2">
+                    <p class="text-center text-gray-500" id="no-files-message">Enter a repository URL and click "Fetch Files".</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate Button -->
+        <div class="text-center">
+            <button id="generate-code-btn" class="w-full sm:w-auto px-6 py-3 border border-transparent text-lg font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200" disabled>
+                Generate Backend Code
+            </button>
+        </div>
+
+        <!-- Generated Code Section -->
+        <div id="generated-code-container" class="mt-8 hidden">
+            <h2 class="text-2xl font-bold text-gray-50 mb-4 text-center">Generated Backend Code</h2>
+            <div class="relative bg-gray-800 text-white rounded-xl shadow-inner overflow-hidden">
+                <button id="copy-code-btn" class="absolute top-2 right-2 p-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600 transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 2a1 1 0 00-1 1v1h-2a2 2 0 00-2 2v10a2 2 0 002 2h6a2 2 0 002-2V7h1a1 1 0 100-2h-1V3a1 1 0 00-1-1H8zM6 6a1 1 0 011-1h2v1H7a1 1 0 00-1 1v8h6V7h1v8a1 1 0 01-1 1H6a1 1 0 01-1-1V7a1 1 0 011-1zm4 1V3h2v4h-2z" />
+                    </svg>
+                </button>
+                <div id="generated-code" class="p-6 overflow-x-auto text-sm">
+                    <pre><code></code></pre>
+                </div>
+            </div>
+            <div id="copy-message" class="mt-2 text-center text-green-400 font-medium hidden">Code copied to clipboard!</div>
+        </div>
+
+    </div>
+
+    <script>
+        // Use a placeholder for the backend URL for this example.
+        const BACKEND_URL = 'http://localhost:3000';
+
+        const repoUrlInput = document.getElementById('repo-url');
+        const fetchFilesBtn = document.getElementById('fetch-files-btn');
+        const fileListContainer = document.getElementById('file-list-container');
+        const fileList = document.getElementById('file-list');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const noFilesMessage = document.getElementById('no-files-message');
+        const generateCodeBtn = document.getElementById('generate-code-btn');
+        const generatedCodeContainer = document.getElementById('generated-code-container');
+        const generatedCodeElement = document.querySelector('#generated-code pre code');
+        const copyCodeBtn = document.getElementById('copy-code-btn');
+        const copyMessage = document.getElementById('copy-message');
+
+        const userStoryInput = document.getElementById('user-story-input');
+        const analyzeStoryBtn = document.getElementById('analyze-story-btn');
+        const storyAnalysisContainer = document.getElementById('story-analysis-container');
+        const storyAnalysisOutput = document.querySelector('#story-analysis-output pre');
+
+        let selectedFiles = [];
+
+        // Handle fetching of files from a real repository
+        fetchFilesBtn.addEventListener('click', async () => {
+            const repoUrl = repoUrlInput.value;
+            if (!repoUrl) {
+                alert('Please enter a valid repository URL.');
+                return;
+            }
+
+            loadingSpinner.classList.remove('hidden');
+            noFilesMessage.classList.add('hidden');
+            fileList.innerHTML = '';
+            generateCodeBtn.disabled = true;
+            selectedFiles = [];
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/fetch-repo-files`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ repoUrl })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to fetch files from repository.');
+                }
+                
+                const data = await response.json();
+                const filePaths = data.filePaths;
+                
+                if (filePaths.length === 0) {
+                    noFilesMessage.textContent = 'No files found in the repository.';
+                    noFilesMessage.classList.remove('hidden');
+                } else {
+                    filePaths.forEach(filePath => {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'flex items-center space-x-2';
+                        fileItem.innerHTML = `
+                            <input type="checkbox" id="file-${filePath}" data-path="${filePath}" class="rounded text-purple-600 bg-[#1e2a4a] border-gray-600 focus:ring-purple-500 h-4 w-4">
+                            <label for="file-${filePath}" class="text-gray-300">${filePath}</label>
+                        `;
+                        fileList.appendChild(fileItem);
+                    });
+
+                    fileList.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.addEventListener('change', (event) => {
+                            const path = event.target.dataset.path;
+                            if (event.target.checked) {
+                                selectedFiles.push(path);
+                            } else {
+                                selectedFiles = selectedFiles.filter(p => p !== path);
+                            }
+                            generateCodeBtn.disabled = selectedFiles.length === 0;
+                        });
+                    });
+
+                    noFilesMessage.classList.add('hidden');
+                }
+
+            } catch (error) {
+                console.error('Error fetching files:', error);
+                noFilesMessage.textContent = `Error: ${error.message}`;
+                noFilesMessage.classList.remove('hidden');
+            } finally {
+                loadingSpinner.classList.add('hidden');
+            }
+        });
+
+        // Handle code generation
+        generateCodeBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) {
+                alert('Please select at least one file.');
+                return;
+            }
+
+            // Show loading spinner
+            generateCodeBtn.disabled = true;
+            generateCodeBtn.innerHTML = `
+                <svg class="animate-spin h-5 w-5 text-white mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating...
+            `;
+            generatedCodeContainer.classList.add('hidden');
+
+            const repoUrl = repoUrlInput.value;
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/generate-backend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filePaths: selectedFiles, repoUrl })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Something went wrong on the server.');
+                }
+
+                const data = await response.json();
+                generatedCodeElement.textContent = data.code;
+                generatedCodeContainer.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error generating code:', error);
+                generatedCodeElement.textContent = `Error: ${error.message}`;
+                generatedCodeContainer.classList.remove('hidden');
+            } finally {
+                generateCodeBtn.disabled = false;
+                generateCodeBtn.innerHTML = 'Generate Backend Code';
+            }
+        });
+
+        // Handle user story analysis
+        analyzeStoryBtn.addEventListener('click', async () => {
+            const userStory = userStoryInput.value;
+            if (!userStory) {
+                alert('Please enter a user story to analyze.');
+                return;
+            }
+
+            analyzeStoryBtn.disabled = true;
+            analyzeStoryBtn.innerHTML = `
+                <svg class="animate-spin h-5 w-5 text-white mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Analyzing...
+            `;
+            storyAnalysisContainer.classList.add('hidden');
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/analyze-user-story`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userStory })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Something went wrong on the server.');
+                }
+
+                const data = await response.json();
+                storyAnalysisOutput.textContent = data.analysis;
+                storyAnalysisContainer.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error analyzing user story:', error);
+                storyAnalysisOutput.textContent = `Error: ${error.message}`;
+                storyAnalysisContainer.classList.remove('hidden');
+            } finally {
+                analyzeStoryBtn.disabled = false;
+                analyzeStoryBtn.innerHTML = 'Analyze User Story';
+            }
+        });
+
+        // Copy to clipboard functionality
+        copyCodeBtn.addEventListener('click', () => {
+            const codeToCopy = generatedCodeElement.textContent;
+            navigator.clipboard.writeText(codeToCopy).then(() => {
+                copyMessage.classList.remove('hidden');
+                setTimeout(() => copyMessage.classList.add('hidden'), 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        });
+
+    </script>
+</body>
+</html>
