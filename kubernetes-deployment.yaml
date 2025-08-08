@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: message-microservice
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: message-microservice
+  template:
+    metadata:
+      labels:
+        app: message-microservice
+    spec:
+      containers:
+        - name: message-microservice
+          image: your-docker-repo/message-microservice:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "localhost:9092"
+            - name: KAFKA_TOPIC_INPUT
+              value: "test_IN"
+            - name: KAFKA_TOPIC_OUTPUT
+              value: "test_OUT"
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: message-microservice-service
+spec:
+  selector:
+    app: message-microservice
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
